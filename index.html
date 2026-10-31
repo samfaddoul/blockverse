@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Blockverse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@600;700;800;900&display=swap">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <!-- ============ LOADING ============ -->
+  <div id="loading" class="screen show">
+    <div class="load-logo"><span class="logo-cube"></span>BLOCKVERSE</div>
+    <div class="load-bar"><div id="load-fill"></div></div>
+    <div id="load-text">Building the island…</div>
+  </div>
+
+  <!-- ============ MAIN MENU ============ -->
+  <div id="menu" class="screen">
+    <div class="menu-left">
+      <div class="logo"><span class="logo-cube"></span><div><div class="logo-title">BLOCKVERSE</div><div class="logo-sub">Explore · Collect · Conquer the Obby</div></div></div>
+      <div class="menu-buttons">
+        <button class="btn btn-play" id="btn-play"><span class="ico">▶</span> Play</button>
+        <button class="btn btn-blue" id="btn-avatar"><span class="ico">👕</span> Avatar</button>
+        <button class="btn btn-white" id="btn-settings"><span class="ico">⚙</span> Settings</button>
+      </div>
+      <div class="menu-hint">WASD move · Mouse look · Shift run · Space jump · E talk · Esc pause</div>
+    </div>
+    <div class="profile-card pop" id="profile-card">
+      <div class="profile-head">
+        <div class="avatar-thumb" id="profile-thumb"></div>
+        <div class="profile-id">
+          <input id="profile-name" maxlength="16" spellcheck="false" aria-label="Player name">
+          <div class="profile-level">Level <b id="profile-level">1</b></div>
+        </div>
+      </div>
+      <div class="xp-bar big"><div id="profile-xp-fill"></div><span id="profile-xp-text">0 / 100 XP</span></div>
+      <div class="stat-grid">
+        <div class="stat"><div class="stat-num" id="stat-coins">0</div><div class="stat-label">Coins</div></div>
+        <div class="stat"><div class="stat-num" id="stat-best">—</div><div class="stat-label">Best Obby</div></div>
+        <div class="stat"><div class="stat-num" id="stat-clears">0</div><div class="stat-label">Obby Clears</div></div>
+        <div class="stat"><div class="stat-num" id="stat-friends">0/12</div><div class="stat-label">Friends Met</div></div>
+      </div>
+      <div class="next-unlock" id="next-unlock"></div>
+    </div>
+  </div>
+
+  <!-- ============ HUD ============ -->
+  <div id="hud" class="hidden">
+    <div class="hud-top-left">
+      <button class="hud-btn" id="hud-menu" title="Menu (Esc)">☰</button>
+      <div class="player-chip">
+        <div class="chip-name" id="hud-name">Player</div>
+        <div class="chip-row"><span class="lvl-badge" id="hud-level">1</span><div class="xp-bar"><div id="hud-xp-fill"></div></div></div>
+      </div>
+    </div>
+    <div class="hud-top-right">
+      <div class="coin-chip" id="coin-chip"><span class="coin-ico"></span><span id="hud-coins">0</span></div>
+    </div>
+    <div id="obby-timer" class="hidden"><div class="timer-label">SKY OBBY</div><div id="timer-value">0:00.00</div><div id="timer-cp">Checkpoint 0/3</div></div>
+    <div id="area-banner"></div>
+    <div id="lock-hint" class="hidden">🖱️ Click to control the camera</div>
+    <div id="interact-prompt" class="hidden"><kbd>E</kbd><span id="interact-text">Talk</span></div>
+    <div class="hotbar">
+      <div class="slot" data-gear="speed"><kbd>1</kbd><div class="slot-ico" style="--c:#29B6F6"></div><div class="slot-name">Speed</div></div>
+      <div class="slot" data-gear="gravity"><kbd>2</kbd><div class="slot-ico" style="--c:#AB47BC"></div><div class="slot-name">Gravity</div></div>
+      <button class="slot slot-bag" id="hud-bag"><kbd>I</kbd><div class="bag-ico">🎒</div><div class="slot-name">Bag</div></button>
+      <button class="slot slot-bag" id="hud-avatar"><kbd>C</kbd><div class="bag-ico">👕</div><div class="slot-name">Avatar</div></button>
+    </div>
+    <div id="toasts"></div>
+    <div id="fps" class="hidden"></div>
+    <div id="labels"></div>
+  </div>
+  <div id="fade"></div>
+
+  <!-- ============ INVENTORY ============ -->
+  <div id="inventory" class="modal hidden">
+    <div class="panel pop">
+      <div class="panel-head"><h2>🎒 Inventory</h2><button class="x" data-close>✕</button></div>
+      <div class="tabs" id="inv-tabs">
+        <button class="tab active" data-tab="gear">Gear</button>
+        <button class="tab" data-tab="wardrobe">Wardrobe</button>
+      </div>
+      <div class="inv-grid" id="inv-grid"></div>
+      <div class="panel-foot"><span class="muted">Buy more items in the Avatar Shop (press C).</span></div>
+    </div>
+  </div>
+
+  <!-- ============ CUSTOMIZE ============ -->
+  <div id="customize" class="screen">
+    <div class="cust-top">
+      <h1>Avatar Editor</h1>
+      <div class="coin-chip light"><span class="coin-ico"></span><span id="cust-coins">0</span></div>
+    </div>
+    <div class="cust-panel pop">
+      <div class="tabs wrap" id="cust-tabs">
+        <button class="tab active" data-cat="skin">Skin</button>
+        <button class="tab" data-cat="face">Face</button>
+        <button class="tab" data-cat="hair">Hair</button>
+        <button class="tab" data-cat="shirt">Shirt</button>
+        <button class="tab" data-cat="pants">Pants</button>
+        <button class="tab" data-cat="hat">Hats</button>
+        <button class="tab" data-cat="accessory">Accessories</button>
+        <button class="tab" data-cat="gear">Gear</button>
+      </div>
+      <div class="cust-section-title" id="cust-title">Skin Tone</div>
+      <div id="cust-grid" class="cust-grid"></div>
+      <div id="cust-extra"></div>
+    </div>
+    <div class="cust-actions">
+      <div class="cust-hint">Drag to spin your avatar</div>
+      <button class="btn btn-white small" id="cust-random">🎲 Randomize</button>
+      <button class="btn btn-white small" id="cust-cancel">Cancel</button>
+      <button class="btn btn-play small" id="cust-save">✔ Save Avatar</button>
+    </div>
+  </div>
+
+  <!-- ============ SETTINGS ============ -->
+  <div id="settings" class="modal hidden">
+    <div class="panel pop">
+      <div class="panel-head"><h2>⚙ Settings</h2><button class="x" data-close>✕</button></div>
+      <div class="settings-list">
+        <label class="row"><span>Music Volume</span><input type="range" min="0" max="1" step="0.05" data-set="musicVolume"></label>
+        <label class="row"><span>Sound Effects</span><input type="range" min="0" max="1" step="0.05" data-set="sfxVolume"></label>
+        <label class="row"><span>Camera Sensitivity</span><input type="range" min="0.3" max="2.5" step="0.1" data-set="sensitivity"></label>
+        <label class="row"><span>Field of View</span><input type="range" min="55" max="95" step="1" data-set="fov"></label>
+        <div class="row"><span>Graphics Quality</span><div class="seg" data-seg="quality"><button data-v="low">Low</button><button data-v="medium">Medium</button><button data-v="high">High</button></div></div>
+        <label class="row"><span>Shadows</span><input type="checkbox" class="toggle" data-set="shadows"></label>
+        <label class="row"><span>Invert Camera Y</span><input type="checkbox" class="toggle" data-set="invertY"></label>
+        <label class="row"><span>Show FPS</span><input type="checkbox" class="toggle" data-set="showFps"></label>
+      </div>
+      <div class="panel-foot"><button class="btn btn-red small" id="reset-progress">Reset Progress</button><button class="btn btn-blue small" data-close>Done</button></div>
+    </div>
+  </div>
+
+  <!-- ============ PAUSE ============ -->
+  <div id="pause" class="modal hidden">
+    <div class="panel narrow pop">
+      <div class="panel-head center"><h2>Paused</h2></div>
+      <div class="pause-buttons">
+        <button class="btn btn-play" id="pause-resume">▶ Resume</button>
+        <button class="btn btn-blue" id="pause-avatar">👕 Avatar</button>
+        <button class="btn btn-white" id="pause-settings">⚙ Settings</button>
+        <button class="btn btn-white" id="pause-respawn">↺ Reset Character</button>
+        <button class="btn btn-red" id="pause-leave">⌂ Main Menu</button>
+      </div>
+      <div class="keys">
+        <div><kbd>WASD</kbd> Move</div><div><kbd>Shift</kbd> Run</div><div><kbd>Space</kbd> Jump</div>
+        <div><kbd>E</kbd> Interact</div><div><kbd>1</kbd><kbd>2</kbd> Gear</div><div><kbd>I</kbd> Inventory</div>
+        <div><kbd>C</kbd> Avatar</div><div><kbd>Mouse</kbd> Camera</div><div><kbd>Wheel</kbd> Zoom</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ OBBY COMPLETE ============ -->
+  <div id="finish" class="modal hidden">
+    <div class="panel narrow pop finish-panel">
+      <div class="trophy">🏆</div>
+      <h2>Obby Complete!</h2>
+      <div class="finish-time" id="finish-time">0:00.00</div>
+      <div class="finish-best" id="finish-best"></div>
+      <div class="rewards" id="finish-rewards"></div>
+      <div class="pause-buttons">
+        <button class="btn btn-play" id="finish-again">↻ Try Again</button>
+        <button class="btn btn-white" id="finish-close">Keep Exploring</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CONFIRM ============ -->
+  <div id="confirm" class="modal hidden">
+    <div class="panel narrow pop">
+      <div class="panel-head center"><h2 id="confirm-title">Are you sure?</h2></div>
+      <p class="confirm-text" id="confirm-text"></p>
+      <div class="panel-foot"><button class="btn btn-white small" id="confirm-no">Cancel</button><button class="btn btn-red small" id="confirm-yes">Yes</button></div>
+    </div>
+  </div>
+
+  <script src="dist/game.js"></script>
+</body>
+</html>
