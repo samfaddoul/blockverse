@@ -57,16 +57,20 @@ export class Player {
       if (input.isDown('KeyS', 'ArrowDown')) iz += 1;
       if (input.isDown('KeyA', 'ArrowLeft')) ix -= 1;
       if (input.isDown('KeyD', 'ArrowRight')) ix += 1;
+      // on-screen joystick (analog: a light push walks slowly, pushing to the edge runs)
+      const joy = input.joy;
+      if (joy && (joy.x || joy.y) && !ix && !iz) { ix = joy.x; iz = joy.y; }
     }
     const len = Math.hypot(ix, iz);
-    const running = input.isDown('ShiftLeft', 'ShiftRight');
+    const mag = Math.min(1, len);
+    const running = input.isDown('ShiftLeft', 'ShiftRight') || (input.joy && input.joy.run && len > 0);
     const maxSpeed = (running ? this.runSpeed : this.walkSpeed) * speedMul;
     let tx = 0, tz = 0;
     if (len > 0) {
       ix /= len; iz /= len;
       const s = Math.sin(camYaw), c = Math.cos(camYaw);
-      tx = (ix * c + iz * s) * maxSpeed;
-      tz = (-ix * s + iz * c) * maxSpeed;
+      tx = (ix * c + iz * s) * maxSpeed * mag;
+      tz = (-ix * s + iz * c) * maxSpeed * mag;
     }
     const accel = this.grounded ? 70 : 28;
     const dvx = tx - this.vel.x, dvz = tz - this.vel.z;

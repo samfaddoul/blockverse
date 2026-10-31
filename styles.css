@@ -241,12 +241,94 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 .reward { background: var(--panel-2); border-radius: 12px; padding: 8px 14px; font-weight: 900; }
 .confirm-text { padding: 0 26px; text-align: center; color: var(--ink-2); font-weight: 700; margin: 4px 0 0; }
 
-@media (max-width: 860px) {
+@media (max-width: 860px) and (orientation: portrait) {
   #menu { flex-direction: column; justify-content: center; gap: 24px; }
   .logo-title { font-size: 48px; }
   .profile-card { display: none; }
   .cust-panel { width: auto; left: 16px; right: 16px; top: auto; height: 46vh; bottom: 90px; }
+  .cust-hint { display: none; }
+  .cust-actions { left: 16px; right: 16px; bottom: 18px; justify-content: center; gap: 8px; }
+  .cust-actions .btn.small { padding: 10px 12px; font-size: 15px; }
+  .cust-top h1 { font-size: 28px; }
 }
 
 /* mouse-look helpers */
 #lock-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(20,24,33,.72); backdrop-filter: blur(6px); color: #fff; font: 600 18px var(--display); padding: 12px 22px; border-radius: 14px; animation: pop .3s ease; }
+
+/* =========================================================
+   TOUCH / MOBILE
+   ========================================================= */
+html, body { touch-action: none; overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
+button { touch-action: manipulation; }
+.touch-only, .tap-ico { display: none; }
+body.touch .touch-only { display: inline; }
+body.touch .desk-only { display: none; }
+body.touch kbd, body.touch .keys { display: none; }
+body.touch .tap-ico { display: inline; font-size: 20px; }
+
+#interact-prompt { pointer-events: auto; border: 0; cursor: pointer; color: var(--ink); }
+body.touch #interact-prompt { bottom: auto; top: 58%; padding: 12px 20px; font-size: 19px; }
+
+#touch-controls { position: absolute; inset: 0; pointer-events: none; }
+#joy-zone { position: absolute; left: 0; bottom: 0; width: 45%; height: 62%; pointer-events: auto; touch-action: none; }
+#joy-base { position: absolute; left: calc(70px + env(safe-area-inset-left)); top: calc(100% - 90px - env(safe-area-inset-bottom)); width: 124px; height: 124px; margin: -62px 0 0 -62px; border-radius: 50%; background: rgba(20,24,33,.28); border: 3px solid rgba(255,255,255,.55); backdrop-filter: blur(3px); transition: opacity .2s, border-color .15s; opacity: .7; }
+#joy-base.active { opacity: 1; transition: none; }
+#joy-base.run { border-color: #ffc928; }
+#joy-knob { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,.92); box-shadow: 0 4px 12px rgba(0,0,0,.3); transform: translate(-50%, -50%); }
+.joy-run { position: absolute; top: -24px; left: 50%; transform: translateX(-50%); font: 800 11px var(--font); letter-spacing: 1px; color: #ffc928; opacity: 0; text-shadow: 0 1px 3px rgba(0,0,0,.5); transition: opacity .15s; }
+#joy-base.run .joy-run { opacity: 1; }
+#btn-jump { position: absolute; right: calc(28px + env(safe-area-inset-right)); bottom: calc(34px + env(safe-area-inset-bottom)); width: 96px; height: 96px; border-radius: 50%; border: 3px solid rgba(255,255,255,.7); background: rgba(20,24,33,.38); backdrop-filter: blur(4px); color: #fff; font-size: 40px; font-weight: 900; pointer-events: auto; touch-action: none; display: grid; place-items: center; transition: transform .08s, background .08s; }
+#btn-jump.held { transform: scale(.9); background: rgba(31,143,255,.7); }
+
+#rotate-hint { display: none; position: absolute; top: calc(70px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); background: rgba(20,24,33,.7); color: #fff; font-weight: 800; font-size: 13px; padding: 8px 14px; border-radius: 99px; white-space: nowrap; }
+
+body.touch .hud-top-left { top: calc(10px + env(safe-area-inset-top)); left: calc(10px + env(safe-area-inset-left)); }
+body.touch .hud-top-right { top: calc(10px + env(safe-area-inset-top)); right: calc(10px + env(safe-area-inset-right)); }
+body.touch .hotbar { bottom: calc(10px + env(safe-area-inset-bottom)); gap: 6px; }
+body.touch .slot { width: 58px; height: 58px; border-radius: 12px; }
+body.touch .slot-name { font-size: 10px; }
+body.touch .bag-ico { font-size: 22px; }
+body.touch .slot-ico { width: 22px; height: 22px; border-width: 4px; }
+body.touch #toasts { top: calc(64px + env(safe-area-inset-top)); }
+body.touch .toast { font-size: 13px; padding: 8px 12px; }
+body.touch #area-banner { font-size: 32px; top: 18%; }
+body.touch .player-chip { min-width: 130px; }
+
+/* phones held upright */
+@media (orientation: portrait) {
+  body.touch #rotate-hint { display: block; }
+  body.touch #rotate-hint { left: calc(10px + env(safe-area-inset-left)); right: 84px; transform: none; white-space: normal; text-align: center; }
+  body.touch .hotbar { bottom: auto; top: calc(66px + env(safe-area-inset-top)); left: auto; right: calc(10px + env(safe-area-inset-right)); transform: none; flex-direction: column; }
+  body.touch #toasts { top: auto; bottom: 150px; left: 10px; right: 10px; align-items: center; }
+  body.touch #obby-timer { top: calc(66px + env(safe-area-inset-top)); }
+  body.touch #area-banner { font-size: 26px; }
+}
+
+/* short landscape screens (phones on their side) */
+@media (max-height: 520px) {
+  #menu { padding: 3vh 5vw; }
+  .menu-left { gap: 16px; }
+  .logo .logo-cube { width: 48px; height: 48px; }
+  .logo-title { font-size: 44px; }
+  .logo-sub { font-size: 14px; margin-top: 4px; }
+  .menu-buttons { gap: 10px; width: 260px; }
+  .menu-buttons .btn { font-size: 19px; padding: 11px 20px; }
+  .menu-buttons .btn-play { font-size: 23px; padding: 13px 20px; }
+  .profile-card { display: block; width: 300px; padding: 14px; margin-top: 0; align-self: center; }
+  .profile-card .stat-grid, .profile-card .next-unlock { display: none; }
+  .panel { max-height: 94vh; }
+  .panel-head { padding: 12px 18px 4px; }
+  .panel-head h2 { font-size: 22px; }
+  .pause-buttons { gap: 8px; padding: 6px 22px 12px; }
+  .pause-buttons .btn { padding: 10px 18px; font-size: 17px; }
+  .trophy { font-size: 40px; }
+  .finish-time { font-size: 38px; }
+  .cust-top { top: 10px; }
+  .cust-top h1 { font-size: 26px; }
+  .cust-panel { top: 52px; bottom: 64px; right: 14px; padding: 12px; width: min(420px, 52vw); }
+  .cust-actions { bottom: 10px; right: 14px; gap: 8px; }
+  .cust-hint { display: none; }
+  .cust-grid { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); }
+  .cust-grid .item .thumb { width: 56px; height: 56px; }
+  #cust-extra .cust-grid.colors { grid-template-columns: repeat(12, 1fr); }
+}

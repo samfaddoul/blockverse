@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#1f6fd1">
   <title>Blockverse</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,7 +31,7 @@
         <button class="btn btn-blue" id="btn-avatar"><span class="ico">👕</span> Avatar</button>
         <button class="btn btn-white" id="btn-settings"><span class="ico">⚙</span> Settings</button>
       </div>
-      <div class="menu-hint">WASD move · Mouse look · Shift run · Space jump · E talk · Esc pause</div>
+      <div class="menu-hint"><span class="desk-only">WASD move · Mouse look · Shift run · Space jump · E talk · Esc pause</span><span class="touch-only">Left thumb moves · drag to look · tap JUMP · tap 💬 to talk</span></div>
     </div>
     <div class="profile-card pop" id="profile-card">
       <div class="profile-head">
@@ -64,7 +67,12 @@
     <div id="obby-timer" class="hidden"><div class="timer-label">SKY OBBY</div><div id="timer-value">0:00.00</div><div id="timer-cp">Checkpoint 0/3</div></div>
     <div id="area-banner"></div>
     <div id="lock-hint" class="hidden">🖱️ Click to control the camera</div>
-    <div id="interact-prompt" class="hidden"><kbd>E</kbd><span id="interact-text">Talk</span></div>
+    <button id="interact-prompt" class="hidden"><kbd>E</kbd><span class="tap-ico">💬</span><span id="interact-text">Talk</span></button>
+    <div id="touch-controls" class="hidden">
+      <div id="joy-zone"><div id="joy-base"><div id="joy-knob"></div><span class="joy-run">RUN</span></div></div>
+      <button id="btn-jump" aria-label="Jump"><span>⤒</span></button>
+    </div>
+    <div id="rotate-hint">↻ Turn your phone sideways for the best view</div>
     <div class="hotbar">
       <div class="slot" data-gear="speed"><kbd>1</kbd><div class="slot-ico" style="--c:#29B6F6"></div><div class="slot-name">Speed</div></div>
       <div class="slot" data-gear="gravity"><kbd>2</kbd><div class="slot-ico" style="--c:#AB47BC"></div><div class="slot-name">Gravity</div></div>

@@ -15,6 +15,10 @@ export class Input {
     this.lastUnlock = 0;
     this.lockTime = 0;
     this.onLockChange = null;
+    this.dragId = null;
+    this.touchMode = false;           // true on phones/tablets: no mouse lock, on-screen controls
+    this.joy = { x: 0, y: 0, run: false };
+    this.onTouchDetected = null;
 
     window.addEventListener('keydown', (e) => {
       if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
@@ -27,22 +31,28 @@ export class Input {
       if (e.code === 'Space' || e.code === 'Enter') e.preventDefault();
       this.down.delete(e.code);
     });
-    window.addEventListener('blur', () => { this.down.clear(); this.dragging = false; });
+    window.addEventListener('blur', () => { this.down.clear(); this.dragging = false; this.dragId = null; });
     // buttons give focus back to the game as soon as they are clicked
     document.addEventListener('click', (e) => { const b = e.target.closest?.('button'); if (b) b.blur(); });
 
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    // switch to touch controls the first time someone actually touches the screen
+    window.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'touch' && !this.touchMode) { this.touchMode = true; this.onTouchDetected?.(); }
+    }, true);
     canvas.addEventListener('pointerdown', (e) => {
-      if (this.locked) return;
+      if (this.locked || this.dragId !== null) return;
+      // one finger drives the camera; other fingers (joystick, jump) are ignored here
       this.dragging = true;
+      this.dragId = e.pointerId;
       this.lastX = e.clientX; this.lastY = e.clientY;
       canvas.setPointerCapture?.(e.pointerId);
     });
     window.addEventListener('pointermove', (e) => {
-      if (this.locked) return;
-      if (!this.dragging) return;
-      this.dragDX += e.clientX - this.lastX;
-      this.dragDY += e.clientY - this.lastY;
+      if (this.locked || !this.dragging || e.pointerId !== this.dragId) return;
+      const k = e.pointerType === 'touch' ? 1.4 : 1;   // fingers travel less than mice
+      this.dragDX += (e.clientX - this.lastX) * k;
+      this.dragDY += (e.clientY - this.lastY) * k;
       this.lastX = e.clientX; this.lastY = e.clientY;
     });
     // raw mouse movement while the pointer is locked (scaled to feel like dragging)
@@ -54,7 +64,9 @@ export class Input {
       this.dragDX += e.movementX * 0.5;
       this.dragDY += e.movementY * 0.5;
     });
-    window.addEventListener('pointerup', () => { this.dragging = false; });
+    const endDrag = (e) => { if (e.pointerId === this.dragId) { this.dragging = false; this.dragId = null; } };
+    window.addEventListener('pointerup', endDrag);
+    window.addEventListener('pointercancel', endDrag);
     // zoom: on the canvas when the cursor is free, anywhere while locked
     window.addEventListener('wheel', (e) => {
       if (this.locked || e.target === canvas) { e.preventDefault(); this.wheel += Math.sign(e.deltaY); }
@@ -66,14 +78,18 @@ export class Input {
       this.lockPending = false;
       if (was && !this.locked) this.lastUnlock = performance.now();
       if (!was && this.locked) this.lockTime = performance.now();
-      this.dragging = false;
+      this.dragging = false; this.dragId = null;
       this.dragDX = this.dragDY = 0;
       this.onLockChange?.(this.locked);
     });
     document.addEventListener('pointerlockerror', () => { this.lockPending = false; });
   }
 
-  get lockSupported() { return 'requestPointerLock' in this.canvas; }
+  get lockSupported() { return !this.touchMode && 'requestPointerLock' in this.canvas; }
+
+  // used by the on-screen buttons
+  press(code) { if (!this.down.has(code)) this.pressed.add(code); this.down.add(code); }
+  release(code) { this.down.delete(code); }
 
   lock() {
     if (this.locked || this.lockPending || !this.lockSupported) return;

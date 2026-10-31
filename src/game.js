@@ -13,6 +13,7 @@ import { Effects } from './systems/effects.js';
 import { Progression, XP } from './systems/progression.js';
 import { UI, formatTime } from './ui/ui.js';
 import { ThumbnailRenderer } from './ui/thumbnails.js';
+import { TouchControls } from './ui/touch.js';
 
 const nextFrame = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0)));
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -37,6 +38,9 @@ export class Game {
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(70, 1, 0.1, 1200);
     this.input = new Input(canvas);
+    this.touch = new TouchControls(this.input);
+    this.input.onTouchDetected = () => this.enableTouchMode();
+    if (window.matchMedia?.('(pointer: coarse)').matches) this.enableTouchMode(true);
     this.resize();
     window.addEventListener('resize', () => this.resize());
 
@@ -79,8 +83,8 @@ export class Game {
     await nextFrame();
 
     const unlock = () => { this.audio.unlock(); this.audio.startMusic(); };
-    window.addEventListener('pointerdown', unlock);
-    window.addEventListener('keydown', unlock);
+    // iOS only unlocks audio on certain events, so listen to all of them
+    for (const ev of ['pointerdown', 'keydown', 'touchend', 'click']) window.addEventListener(ev, unlock);
 
     this.clock = new THREE.Clock();
     this.elapsed = 0;
@@ -112,7 +116,7 @@ export class Game {
       this.scene.traverse((o) => { if (o.material) { (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => { m.needsUpdate = true; }); } });
     }
     if (this.world) {
-      const size = s.quality === 'low' ? 1024 : 2048;
+      const size = s.quality === 'high' ? 2048 : 1024;
       if (this.world.sun.shadow.mapSize.x !== size) {
         this.world.sun.shadow.mapSize.set(size, size);
         this.world.sun.shadow.map?.dispose(); this.world.sun.shadow.map = null;
@@ -159,8 +163,27 @@ export class Game {
     if (!first) this.saveProfile();
   }
 
+  // Phones / tablets: on-screen controls, no mouse lock, lighter graphics.
+  enableTouchMode(atStartup = false) {
+    this.input.touchMode = true;
+    document.body.classList.add('touch');
+    this.touch.enable(true);
+    this.input.unlock();
+    // first time on a touch device: pick graphics settings a phone can handle
+    if (this.profile && !this.profile.settings.touchTuned) {
+      this.profile.settings.touchTuned = true;
+      this.profile.settings.quality = 'medium';
+      if (!atStartup && this.renderer) this.applySettings();
+      this.saveProfile();
+    }
+  }
+
   play() {
     this.audio.unlock(); this.audio.startMusic();
+    if (this.input.touchMode) {
+      // go fullscreen and landscape where the browser allows it (Android); ignored elsewhere
+      try { document.documentElement.requestFullscreen?.({ navigationUI: 'hide' })?.then(() => screen.orientation?.lock?.('landscape').catch(() => {})).catch(() => {}); } catch { /* not supported */ }
+    }
     this.state = 'play';
     this.ui.showMenu(false);
     this.ui.showHud(true);
@@ -169,7 +192,7 @@ export class Game {
     this.cam.yaw = 0; this.cam.pitch = 0.3;
     this.cam.snap(this.player.head);
     this.currentArea = null;
-    this.ui.toast('Welcome to Blockverse! Talk to the villagers with E.', { icon: '👋', cls: 'blue' });
+    this.ui.toast(this.input.touchMode ? 'Welcome to Blockverse! Walk up to villagers and tap 💬 to chat.' : 'Welcome to Blockverse! Talk to the villagers with E.', { icon: '👋', cls: 'blue' });
   }
 
   wantsLock() {
@@ -492,9 +515,17 @@ export class Game {
       const p = this.player.pos, y = this.custYaw;
       const fx = Math.sin(y), fz = Math.cos(y);           // from avatar towards camera
       const rx = Math.cos(y), rz = -Math.sin(y);          // screen right
-      const narrow = window.innerWidth < 860;
-      const side = narrow ? 0 : 1.9;
-      const dist = narrow ? 8.5 : 7.4;
+      const narrow = window.innerWidth < 860 && window.innerHeight > window.innerWidth; // phone held upright
+      const dist = narrow ? 8.5 : window.innerHeight < 520 ? 6 : 7.4;
+      // centre the avatar in the space left of the editor panel, whatever the screen size
+      let side = 0;
+      if (!narrow) {
+        const panel = document.querySelector('.cust-panel');
+        const used = panel ? window.innerWidth - panel.getBoundingClientRect().left : 0;
+        const freeCentre = (window.innerWidth - used) / 2 / window.innerWidth; // 0..0.5 of the screen
+        const ndc = 1 - 2 * freeCentre;
+        side = ndc * dist * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2)) * this.camera.aspect;
+      }
       const camPos = new THREE.Vector3(p.x + fx * dist + rx * side, p.y + (narrow ? 0.6 : 2.2), p.z + fz * dist + rz * side);
       this.camera.position.lerp(camPos, 1 - Math.exp(-8 * dt));
       const look = new THREE.Vector3(p.x + rx * side, p.y + (narrow ? -0.4 : 1.45), p.z + rz * side);
@@ -506,7 +537,10 @@ export class Game {
       this.input.consumeDrag(); this.input.consumeWheel();
     }
 
-    this.coins.rim.visible = this.coins.face.visible = this.state !== 'customize';
+    // keep the avatar editor clean: no coins or villagers wandering into the shot
+    const showWorldStuff = this.state !== 'customize';
+    this.coins.rim.visible = this.coins.face.visible = showWorldStuff;
+    for (const n of this.npcs) n.avatar.root.visible = showWorldStuff;
     this.studio.intensity += ((this.state === 'customize' ? 1.5 : 0) - this.studio.intensity) * (1 - Math.exp(-6 * dt));
     this.effects.update(dt);
     this.world.followShadow(this.player.pos);

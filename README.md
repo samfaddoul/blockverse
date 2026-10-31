@@ -23,6 +23,10 @@ A blocky 3D sandbox adventure built with Three.js: explore a floating island, me
 | C | Avatar editor and shop |
 | Esc | Pause and free the cursor |
 
+### On phones and tablets
+
+Touch controls switch on automatically: drag your left thumb to move (push to the edge to run), drag anywhere else to look around, tap the jump button, and tap the 💬 prompt to talk. Landscape works best.
+
 ## Code layout
 
 ```

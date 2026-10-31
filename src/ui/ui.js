@@ -125,6 +125,7 @@ export class UI {
     $('hud-menu').onclick = () => g.togglePause(true);
     $('hud-bag').onclick = () => this.toggleInventory();
     $('hud-avatar').onclick = () => g.openCustomize();
+    $('interact-prompt').onclick = () => g.interact();
     document.querySelectorAll('.hotbar .slot[data-gear]').forEach((el) => {
       el.style.pointerEvents = 'auto';
       el.onclick = () => g.toggleGear(el.dataset.gear);
